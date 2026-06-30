@@ -2,8 +2,11 @@ using FluentValidation;
 using MediatR;
 using power_plant_coding_challenge_API.Middlewares;
 using power_plant_coding_challenge_core.Features.CalculateProductionPlan;
+using power_plant_coding_challenge_core.Options;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.Configure<ProductionPlanOptions>(builder.Configuration.GetSection("ProductionPlan"));
 
 builder.Services.AddMediatR(cfg =>
 {

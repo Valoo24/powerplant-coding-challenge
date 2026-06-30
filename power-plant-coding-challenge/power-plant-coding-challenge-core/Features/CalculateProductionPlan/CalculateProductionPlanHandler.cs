@@ -1,5 +1,7 @@
 ﻿using FluentValidation;
 using MediatR;
+using Microsoft.Extensions.Options;
+using power_plant_coding_challenge_core.Options;
 using power_plant_coding_challenge_domain.Enums;
 using power_plant_coding_challenge_domain.Models;
 
@@ -7,15 +9,19 @@ namespace power_plant_coding_challenge_core.Features.CalculateProductionPlan;
 
 public static partial class CalculateProductionPlan
 {
-    public class Handler : IRequestHandler<Command, Response>
+    public class Handler(IOptions<ProductionPlanOptions> options) : IRequestHandler<Command, Response>
     {
         public async Task<Response> Handle(Command request, CancellationToken cancellationToken)
         {
             var orderedResults = new List<Result>();
+            var includeCo2Costs = options.Value.IncludeCo2Costs;
+            var results = new List<Result>();
+            List<Result>? resultToAddToWindPowerplants = null;
+            var useWind = false; //flag used for ordering the final result list.
 
             //Step 1.A : Order the powerplants by cost efficiency, then by Pmax descending. This is to ensure that we use the most efficient powerplants first, and in case of a tie, we use the one with the highest Pmax.
             var orderedPowerplants = request.Powerplants
-                .OrderBy(powerplant => powerplant.GetCostEfficiency(request.Fuels))
+                .OrderBy(powerplant => powerplant.GetCostEfficiency(request.Fuels, includeCo2Costs))
                 .ThenByDescending(powerplant => powerplant.Pmax)
                 .ToList();
 
@@ -40,41 +46,36 @@ public static partial class CalculateProductionPlan
             var totalWindPower = windOnlyPowerplants.Sum(powerplant => powerplant.GetActualPMax(request.Fuels));
             var loadAfterWindPower = request.Load - totalWindPower;
 
-            var results = new List<Result>();
-            List<Result>? resultsWithWindPowerplant = null;
-            var useWind = false; //flag used for ordering the final result list.
-
             //the wind power can meet the load exactly, we use it and set the non-wind powerplants to 0.
-            if (loadAfterWindPower == 0) resultsWithWindPowerplant = new List<Result>();
+            if (loadAfterWindPower == 0) resultToAddToWindPowerplants = new List<Result>();
 
             //the wind power can meet part of the load, we try to find a combination of non-wind powerplants that can meet the remaining load.
             else if (loadAfterWindPower > 0) 
-                resultsWithWindPowerplant = GetUsablePowerplantsFromList(nonWindPowerplants, request.Fuels, loadAfterWindPower);
+                resultToAddToWindPowerplants = GetUsablePowerplantsFromList(nonWindPowerplants, request.Fuels, loadAfterWindPower);
 
             var resultsWithoutWindPowerplants = GetUsablePowerplantsFromList(nonWindPowerplants, request.Fuels, request.Load);
 
             //Both combination of powerplants can meet the load, we compare their costs and use the one with the lowest cost.
-            if (resultsWithWindPowerplant is not null && resultsWithoutWindPowerplants is not null)
+            if (resultToAddToWindPowerplants is not null && resultsWithoutWindPowerplants is not null)
             {
-                var costWithWindPowerplants = ComputeCost(resultsWithWindPowerplant, nonWindPowerplants, request.Fuels);
-                var costWithoutWindPowerplants = ComputeCost(resultsWithoutWindPowerplants, nonWindPowerplants, request.Fuels);
+                var costWithWindPowerplants = ComputeCost(resultToAddToWindPowerplants, nonWindPowerplants, request.Fuels, includeCo2Costs);
+                var costWithoutWindPowerplants = ComputeCost(resultsWithoutWindPowerplants, nonWindPowerplants, request.Fuels, includeCo2Costs);
 
                 if (costWithWindPowerplants > costWithoutWindPowerplants) results = resultsWithoutWindPowerplants;
                 else
                 {
-                    results = resultsWithWindPowerplant;
+                    results = resultToAddToWindPowerplants;
                     useWind = true;
                 }
             }
-            else if (resultsWithWindPowerplant is not null) //only the combination with wind powerplants can meet the load, we use it.
+            //only the combination with wind powerplants can meet the load, we use it.
+            else if (resultToAddToWindPowerplants is not null)
             {
-                results = resultsWithWindPowerplant;
+                results = resultToAddToWindPowerplants;
                 useWind = true;
             }
-            else if (resultsWithoutWindPowerplants is not null) //only the combination without wind powerplants can meet the load, we use it.
-            {
-                results = resultsWithoutWindPowerplants;
-            }
+            //only the combination without wind powerplants can meet the load, we use it.
+            else if (resultsWithoutWindPowerplants is not null) results = resultsWithoutWindPowerplants;
             else throw new InvalidOperationException("No combination of powerplants can meet the required load.");
 
             //Step 4 : Order the results to match the order of the powerplants in the merit-order list.
@@ -180,14 +181,14 @@ public static partial class CalculateProductionPlan
         /// Computes the total cost of the selected powerplants for a given dispatch based on their production and fuel costs.
         /// </summary>
         /// <returns>The total cost for the selected powerplants for a given dispatch contained in the results list</returns>
-        private static decimal ComputeCost(List<Result> results, List<Powerplant> powerplants, Fuel fuels)
+        private static decimal ComputeCost(List<Result> results, List<Powerplant> powerplants, Fuel fuels, bool includeCo2Costs = false)
         {
             var totalCost = 0m;
 
             foreach (var result in results)
             {
                 var powerplant = powerplants.First(powerplant => powerplant.Name == result.Name);
-                totalCost += result.P * powerplant.GetCostEfficiency(fuels);
+                totalCost += result.P * powerplant.GetCostEfficiency(fuels, includeCo2Costs);
             }
 
             return totalCost;

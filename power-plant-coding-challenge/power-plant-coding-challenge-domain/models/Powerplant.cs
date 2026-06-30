@@ -35,16 +35,18 @@ public class Powerplant
     /// returns the cost efficiency of a powerplant based on its type, dividing the fuel price by the powerplant efficiency.
     /// </summary>
     /// <returns>An efficiency measure under a double. the more the value tends to 0, the more efficient the powerplant is.</returns>
+    /// <param name="includeCo2Costs">If true, the CO2 cost will be added to the gas cost for gas-fired powerplants.</param>
     /// <exception cref="ArgumentOutOfRangeException">Thrown if the PowerplantType is unknown</exception>
     #pragma warning disable IDE0066
-    public decimal GetCostEfficiency(Fuel fuels)
+    public decimal GetCostEfficiency(Fuel fuels, bool includeCo2Costs = false)
     {
         switch (Type)
         {
             case PowerplantType.Windturbine:
                 return 0;
             case PowerplantType.Gasfired:
-                return fuels.Gas / Efficiency;
+                var co2Cost = includeCo2Costs ? 0.3m * fuels.Co2 : 0m;
+                return (fuels.Gas / Efficiency) + co2Cost;
             case PowerplantType.Turbojet:
                 return fuels.Kerosine / Efficiency;
             default:

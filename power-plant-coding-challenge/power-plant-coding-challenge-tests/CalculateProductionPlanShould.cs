@@ -1,4 +1,6 @@
+using Microsoft.Extensions.Options;
 using power_plant_coding_challenge_core.Features.CalculateProductionPlan;
+using power_plant_coding_challenge_core.Options;
 using power_plant_coding_challenge_domain.Enums;
 using power_plant_coding_challenge_domain.Models;
 
@@ -6,7 +8,8 @@ namespace power_plant_coding_challenge_tests;
 
 public class CalculateProductionPlanShould
 {
-    private readonly CalculateProductionPlan.Handler _sut = new();
+    private readonly CalculateProductionPlan.Handler _sut =
+    new(Options.Create(new ProductionPlanOptions { IncludeCo2Costs = false }));
 
     // Powerplants coming from payload1/2/3.json
     private static List<Powerplant> DefaultPowerplants =>
@@ -14,7 +17,7 @@ public class CalculateProductionPlanShould
         new() { Name = "gasfiredbig1", Type = PowerplantType.Gasfired, Efficiency = 0.53m, Pmin = 100, Pmax = 460 },
         new() { Name = "gasfiredbig2", Type = PowerplantType.Gasfired, Efficiency = 0.53m, Pmin = 100, Pmax = 460 },
         new() { Name = "gasfiredsomewhatsmaller", Type = PowerplantType.Gasfired, Efficiency = 0.37m, Pmin = 40, Pmax = 210 },
-        new() { Name = "tj1", Type = PowerplantType.Turbojet, Efficiency = 0.3m, Pmin = 0, Pmax = 16  },
+        new() { Name = "tj1", Type = PowerplantType.Turbojet, Efficiency = 0.3m, Pmin = 0, Pmax = 16 },
         new() { Name = "windpark1", Type = PowerplantType.Windturbine, Efficiency = 1m, Pmin = 0, Pmax = 150 },
         new() { Name = "windpark2", Type = PowerplantType.Windturbine, Efficiency = 1m, Pmin = 0, Pmax = 36 },
     ];
@@ -489,5 +492,69 @@ public class CalculateProductionPlanShould
         Assert.Equal(0m, results["GasPlant"]);
         Assert.Equal(25m, results["JetTurbine"]);
         Assert.Equal(100m, results.Values.Sum());
+    }
+
+    /// <summary>
+    /// Test that when CO2 costs are enabled, the CO2 cost is factored into the merit order of gas-fired plants.
+    /// </summary>
+    [Fact]
+    public async Task ReturnTurboJetHigherInMeritOrderTakingToAccountTheCo2Cost()
+    {
+        //Arrange
+        var sutWithCo2 = new CalculateProductionPlan.Handler(
+            Options.Create(new ProductionPlanOptions { IncludeCo2Costs = true }));
+
+        var command = new CalculateProductionPlan.Command(
+            Load: 50,
+            Fuels: new Fuel { Gas = 10m, Kerosine = 20m, Co2 = 100m, Wind = 0m },
+            Powerplants: [
+                new() { Name = "GasPlant", Type = PowerplantType.Gasfired, Efficiency = 0.9m, Pmin = 0, Pmax = 100 },
+                new() { Name = "JetPlant", Type = PowerplantType.Turbojet, Efficiency = 0.5m, Pmin = 0, Pmax = 100 },
+            ]
+        );
+
+        //Act
+        var response = await sutWithCo2.Handle(command, CancellationToken.None);
+        var results = response.Results.ToDictionary(result => result.Name, result => result.P);
+
+        //Assert
+        Assert.Equal(50m, results["JetPlant"]);
+        Assert.Equal(0m,  results["GasPlant"]);
+        Assert.Equal(50m, results.Values.Sum());
+    }
+
+    /// <summary>
+    /// Test that CO2 costs actively change the merit order between a gas plant and a turbojet.
+    /// </summary>
+    [Fact]
+    public async Task ReturnDifferentResultRegardingTheUseOfCo2Cost()
+    {
+        //Arrange
+        var sutNoCo2   = new CalculateProductionPlan.Handler(Options.Create(new ProductionPlanOptions { IncludeCo2Costs = false }));
+        var sutWithCo2 = new CalculateProductionPlan.Handler(Options.Create(new ProductionPlanOptions { IncludeCo2Costs = true }));
+
+        var command = new CalculateProductionPlan.Command(
+            Load: 100,
+            Fuels: new Fuel { Gas = 10m, Kerosine = 15m, Co2 = 30m, Wind = 0m },
+            Powerplants: [
+                new() { Name = "GasStation", Type = PowerplantType.Gasfired, Efficiency = 0.4m, Pmin = 0, Pmax = 200 },
+                new() { Name = "JetStation", Type = PowerplantType.Turbojet, Efficiency = 0.5m, Pmin = 0, Pmax = 200 },
+            ]
+        );
+
+        //Act
+        var responseNoCo2  = await sutNoCo2.Handle(command, CancellationToken.None);
+        var responseWithCo2 = await sutWithCo2.Handle(command, CancellationToken.None);
+
+        var resultsNoCo2   = responseNoCo2.Results.ToDictionary(result => result.Name, result => result.P);
+        var resultsWithCo2 = responseWithCo2.Results.ToDictionary(result => result.Name, result => result.P);
+
+        //Assert — without CO2
+        Assert.Equal(100m, resultsNoCo2["GasStation"]);
+        Assert.Equal(0m, resultsNoCo2["JetStation"]);
+
+        //Assert — with CO2
+        Assert.Equal(0m, resultsWithCo2["GasStation"]);
+        Assert.Equal(100m, resultsWithCo2["JetStation"]);
     }
 }

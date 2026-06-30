@@ -2,7 +2,7 @@
 
 This repository contains my solution to the [GEM / ENGIE SPaaS coding challenge](https://github.com/gem-spaas/powerplant-coding-challenge). The challenge consists of building a REST API that solves the **unit commitment problem**: given a forecasted electricity load and a set of available powerplants, determine how much power each plant should produce to meet the demand at minimum cost, while respecting each plant's operational constraints (Pmin, Pmax).
 
-The production plan is computed using a **merit-order algorithm** — plants are ranked by their real cost per MWh (wind at zero cost, then gas-fired, then turbojet) and activated in that order until the load is satisfied. Wind turbines are treated as all-or-nothing (non-throttleable) as per the challenge specification.
+The production plan is computed using a **merit-order algorithm** — plants are ranked by their real cost per MWh (wind at zero cost, then gas-fired, then turbojet) and activated in that order until the load is satisfied. Wind turbines are treated as all-or-nothing (non-throttleable) as per the challenge specification. The optional CO2 bonus is also implemented.
 
 ## Tech stack
 
@@ -29,6 +29,8 @@ power-plant-coding-challenge/
 
 ## Configuration
 
+### MediatR license key
+
 MediatR v12+ requires a license key.
 
 For local development, add it to `power-plant-coding-challenge-API/appsettings.Development.json`:
@@ -42,6 +44,26 @@ For local development, add it to `power-plant-coding-challenge-API/appsettings.D
 ```
 
 For Docker, the key is injected via the `MediatR__LicenseKey` environment variable defined in `compose.yaml` — no additional setup needed.
+
+### CO2 cost (bonus)
+
+The CO2 surcharge on gas-fired plants is optional and controlled via `appsettings.json`:
+
+```json
+{
+  "ProductionPlan": {
+    "IncludeCo2Costs": true
+  }
+}
+```
+
+When enabled, each MWh produced by a gas-fired plant incurs an additional cost of `0.3 ton × co2_price (€/ton)`, which is factored into the merit-order calculation. Turbojet plants are not subject to this surcharge as per the challenge specification.
+
+For Docker, this option is controlled via the `compose.yaml` environment variable:
+
+```yaml
+- ProductionPlan__IncludeCo2Costs=false  # set to true to enable CO2 costs
+```
 
 ## Build
 
