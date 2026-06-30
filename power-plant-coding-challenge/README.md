@@ -22,11 +22,14 @@ The production plan is computed using a **merit-order algorithm** — plants are
 
 ## Prerequisites
 
-- [.NET 10 SDK](https://dotnet.microsoft.com/download)
+- [.NET 10 SDK](https://dotnet.microsoft.com/download) — for running locally
+- [Docker](https://www.docker.com/) — for running in a container
 
 ## Configuration
 
-MediatR v12+ requires a license key. Add it to `appsettings.json` (or `appsettings.Development.json`) under the `MediatR` section:
+MediatR v12+ requires a license key.
+
+For local development, add it to `appsettings.Development.json`:
 
 ```json
 {
@@ -36,7 +39,7 @@ MediatR v12+ requires a license key. Add it to `appsettings.json` (or `appsettin
 }
 ```
 
-The key is read in `Program.cs` via `builder.Configuration["MediatR:LicenseKey"]` and passed to `AddMediatR`. Without it, MediatR will log a warning but the API will still run.
+For Docker, the key is injected via the `MediatR__LicenseKey` environment variable defined in `compose.yaml` — no additional setup needed.
 
 ## Build
 
@@ -81,6 +84,22 @@ Example response:
 ```
 
 Validation errors return HTTP 400 with a `ProblemDetails` body. Unexpected errors return HTTP 500.
+
+## Run with Docker
+
+From the `power-plant-coding-challenge/` directory:
+
+```bash
+docker compose up --build
+```
+
+The API starts on **http://localhost:8888** (the container listens on port 8080, mapped to 8888 on the host).
+
+To stop the container:
+
+```bash
+docker compose down
+```
 
 ## Run tests
 
