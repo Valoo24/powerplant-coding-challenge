@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace power_plant_coding_challenge_domain.models;
+namespace power_plant_coding_challenge_domain.Models;
 
 public class Fuel
 {

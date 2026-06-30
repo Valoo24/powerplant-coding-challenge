@@ -2,22 +2,15 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
-namespace power_plant_coding_challenge_API.middlewares;
+namespace power_plant_coding_challenge_API.Middlewares;
 
-public class CustomExceptionHandlerMiddleware
+public class CustomExceptionHandlerMiddleware(RequestDelegate next)
 {
-    private readonly RequestDelegate _next;
-
-    public CustomExceptionHandlerMiddleware(RequestDelegate next)
-    {
-        _next = next;
-    }
-
     public async Task Invoke(HttpContext context)
     {
         try
         {
-            await _next(context);
+            await next(context);
         }
         catch (Exception ex)
         {
@@ -44,6 +37,15 @@ public class CustomExceptionHandlerMiddleware
                     Detail = ex.Message
                 };
                 break;
+            case ArgumentOutOfRangeException ex:
+                httpStatusCode = HttpStatusCode.BadRequest;
+                responseBody = new()
+                {
+                    Status = (int)httpStatusCode,
+                    Title = "Argument out of Range",
+                    Detail = ex.Message
+                };
+                break;
             case Exception ex:
                 httpStatusCode = HttpStatusCode.InternalServerError;
                 responseBody = new()
@@ -58,9 +60,7 @@ public class CustomExceptionHandlerMiddleware
         context.Response.StatusCode = (int)httpStatusCode;
 
         if (responseBody is null)
-        {
             return context.Response.WriteAsJsonAsync(new { error = exception.Message });
-        }
 
         return context.Response.WriteAsJsonAsync(responseBody);
     }
