@@ -111,6 +111,8 @@ Validation errors return HTTP 400 with a `ProblemDetails` body. Unexpected error
 
 ## Run with Docker
 
+Make sure Docker Desktop is running locally before proceeding — `docker compose` needs it to build and start the container.
+
 From the `power-plant-coding-challenge/` directory:
 
 ```bash

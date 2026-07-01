@@ -21,7 +21,8 @@ public class Powerplant
         {
             case PowerplantType.Windturbine:
                 var windEfficiencyPercentage = fuels.Wind / 100.0m;
-                return Pmax * windEfficiencyPercentage;
+                var result = Pmax * windEfficiencyPercentage;
+                return Math.Round(result, 1, MidpointRounding.AwayFromZero);
             case PowerplantType.Gasfired:
                 return Pmax;
             case PowerplantType.Turbojet:

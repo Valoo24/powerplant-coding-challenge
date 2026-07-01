@@ -4,7 +4,7 @@ using System.Net;
 
 namespace power_plant_coding_challenge_API.Middlewares;
 
-public class CustomExceptionHandlerMiddleware(RequestDelegate next)
+public class CustomExceptionHandlerMiddleware(RequestDelegate next, ILogger<CustomExceptionHandlerMiddleware> logger)
 {
     public async Task Invoke(HttpContext context)
     {
@@ -30,6 +30,7 @@ public class CustomExceptionHandlerMiddleware(RequestDelegate next)
         {
             case ValidationException ex:
                 httpStatusCode = HttpStatusCode.BadRequest;
+                logger.LogWarning(ex, $"Validation error on {context.Request.Path}: {ex.Message}");
                 responseBody = new()
                 {
                     Status = (int)httpStatusCode,
@@ -39,6 +40,7 @@ public class CustomExceptionHandlerMiddleware(RequestDelegate next)
                 break;
             case ArgumentOutOfRangeException ex:
                 httpStatusCode = HttpStatusCode.BadRequest;
+                logger.LogWarning(ex, $"Argument out of range on {context.Request.Path}: {ex.Message}");
                 responseBody = new()
                 {
                     Status = (int)httpStatusCode,
@@ -48,6 +50,7 @@ public class CustomExceptionHandlerMiddleware(RequestDelegate next)
                 break;
             case Exception ex:
                 httpStatusCode = HttpStatusCode.InternalServerError;
+                logger.LogError(ex, $"Unhandled exception on {context.Request.Path}: {ex.Message}");
                 responseBody = new()
                 {
                     Status = (int)httpStatusCode,

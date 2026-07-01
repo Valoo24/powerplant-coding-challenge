@@ -28,8 +28,6 @@ app.MapOpenApi();
 
 app.UseMiddleware<CustomExceptionHandlerMiddleware>();
 
-app.UseHttpsRedirection();
-
 app.UseAuthorization();
 
 app.MapControllers();
