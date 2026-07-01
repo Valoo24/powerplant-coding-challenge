@@ -1,5 +1,4 @@
-﻿using MediatR;
-using power_plant_coding_challenge_domain.Enums;
+﻿using power_plant_coding_challenge_domain.Enums;
 using power_plant_coding_challenge_domain.Models;
 
 namespace power_plant_coding_challenge_core.Features.CalculateProductionPlan;

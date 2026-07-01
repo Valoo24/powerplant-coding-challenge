@@ -1,6 +1,4 @@
-﻿using MediatR;
-using Microsoft.IdentityModel.Tokens.Experimental;
-using power_plant_coding_challenge_domain.Enums;
+﻿using power_plant_coding_challenge_domain.Enums;
 using power_plant_coding_challenge_domain.Models;
 
 namespace power_plant_coding_challenge_core.Features.CalculateProductionPlan;
@@ -11,9 +9,9 @@ public static class PowerplantListExtension
     /// Gets a list of usable powerplants from a given list that can meet the required load.
     /// </summary>
     /// <returns>A list of powerplants that succeeds meeting the required load. Null if no combination of powerplants can meet the required load.</returns>
-    public static List<CalculateProductionPlanResult>? GetUsablePowerplantsFromList(this List<Powerplant> orderedPowerplants, Fuel fuels, decimal load)
+    public static List<CalculateProductionPlanResult>? GetUsablePowerplantsFromList(this List<Powerplant> powerplants, Fuel fuels, decimal load)
     {
-        var selectedPowerplants = orderedPowerplants.CreatePowerplantListToMatchLoad(fuels, load);
+        var selectedPowerplants = powerplants.CreatePowerplantListWhereLoadInPRange(fuels, load);
         if (selectedPowerplants.Count == 0) return null;
 
         var result = selectedPowerplants.CreateResultWithPMinOnly(); //This ensures that we respect the Pmin constraints of the selected powerplants.
@@ -45,13 +43,13 @@ public static class PowerplantListExtension
     /// <summary>
     /// Splits a list of powerplants into two lists: one containing only the powerplants of the specified type, and the other containing all other powerplants.
     /// </summary>
-    public static void SplitByPowerplantType(this List<Powerplant> orderedPowerplants, PowerplantType type, out List<Powerplant> windOnlyPowerplants, out List<Powerplant> nonWindPowerplants)
+    public static void SplitByPowerplantType(this List<Powerplant> powerplants, PowerplantType type, out List<Powerplant> powerplantsOfType, out List<Powerplant> powerplantsNotOfType)
     {
-        windOnlyPowerplants = orderedPowerplants
+        powerplantsOfType = powerplants
             .Where(powerplant => powerplant.Type == type)
             .ToList();
 
-        nonWindPowerplants = orderedPowerplants
+        powerplantsNotOfType = powerplants
             .Where(powerplant => powerplant.Type != type)
             .ToList();
     }
@@ -71,7 +69,7 @@ public static class PowerplantListExtension
     /// Creates a list of powerplants that can meet the required load, while respecting the Pmin and Pmax constraints.
     /// </summary>
     /// <returns>A list of powerplants that can meet the required load, while respecting the Pmin and Pmax constraints.</returns>
-    private static List<Powerplant> CreatePowerplantListToMatchLoad(this List<Powerplant> powerplants, Fuel fuels, decimal load)
+    private static List<Powerplant> CreatePowerplantListWhereLoadInPRange(this List<Powerplant> powerplants, Fuel fuels, decimal load)
     {        
         var subset = new List<Powerplant>();
 

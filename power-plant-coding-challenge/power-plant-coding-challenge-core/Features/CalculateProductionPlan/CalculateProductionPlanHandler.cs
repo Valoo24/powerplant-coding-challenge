@@ -30,7 +30,7 @@ public class CalculateProductionPlanHandler(IOptions<ProductionPlanOptions> opti
         //the wind power can meet part of the load, we try to find a combination of non-wind powerplants that can meet the remaining load.
         else if (loadAfterWindPower > 0)
             resultWithWindPowerplants = nonWindPowerplants.GetUsablePowerplantsFromList(request.Fuels, loadAfterWindPower);
-
+        //Whatever were the previous result with wind powerplants, we also need to calculate the result without wind powerplants to compare the cost and see if we can meet the load with non-wind powerplants only.
         var resultWithoutWindPowerplants = nonWindPowerplants.GetUsablePowerplantsFromList(request.Fuels, request.Load);
 
         var result = resultWithWindPowerplants.CompareResultCostWith(resultWithoutWindPowerplants, nonWindPowerplants, request.Fuels, includeCo2Costs);
