@@ -11,10 +11,10 @@ builder.Services.Configure<ProductionPlanOptions>(builder.Configuration.GetSecti
 builder.Services.AddMediatR(cfg =>
 {
     cfg.LicenseKey = builder.Configuration["MediatR:LicenseKey"];
-    cfg.RegisterServicesFromAssemblies(typeof(CalculateProductionPlan.Handler).Assembly);
+    cfg.RegisterServicesFromAssemblies(typeof(CalculateProductionPlanHandler).Assembly);
 });
 
-builder.Services.AddValidatorsFromAssemblyContaining<CalculateProductionPlan.CommandValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CalculateProductionPlanCommandValidator>();
 
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 

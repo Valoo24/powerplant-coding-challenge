@@ -9,10 +9,10 @@ namespace power_plant_coding_challenge_API.Controllers
     public class ProductionPlanController(IMediator mediator) : ControllerBase
     {
         [HttpPost]
-        [ProducesResponseType(typeof(IEnumerable<CalculateProductionPlan.Result>), 200)]
+        [ProducesResponseType(typeof(IEnumerable<CalculateProductionPlanResult>), 200)]
         [ProducesResponseType(typeof(ProblemDetails), 400)]
         [ProducesResponseType(typeof(ProblemDetails), 500)]
-        public async Task<IActionResult> CalculateProductionPlan([FromBody] CalculateProductionPlan.Command command, CancellationToken cancellationToken)
+        public async Task<IActionResult> CalculateProductionPlan([FromBody] CalculateProductionPlanCommand command, CancellationToken cancellationToken)
         {
             var response = await mediator.Send(command, cancellationToken);
 

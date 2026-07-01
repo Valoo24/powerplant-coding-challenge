@@ -2,19 +2,17 @@
 using MediatR;
 using power_plant_coding_challenge_domain.Models;
 
-namespace power_plant_coding_challenge_core.Features.CalculateProductionPlan;
-
-public static partial class CalculateProductionPlan
+namespace power_plant_coding_challenge_core.Features.CalculateProductionPlan
 {
-    public record Response(List<Result> Results);
-    public record Result(string Name, decimal P);
-    public record Command(
+    public record CalculateProductionPlanResponse(List<CalculateProductionPlanResult> Results);
+    public record CalculateProductionPlanResult(string Name, decimal P);
+    public record CalculateProductionPlanCommand(
     int Load,
     Fuel Fuels,
-    List<Powerplant> Powerplants) : IRequest<Response>;
-    public class CommandValidator : AbstractValidator<Command>
+    List<Powerplant> Powerplants) : IRequest<CalculateProductionPlanResponse>;
+    public class CalculateProductionPlanCommandValidator : AbstractValidator<CalculateProductionPlanCommand>
     {
-        public CommandValidator()
+        public CalculateProductionPlanCommandValidator()
         {
             RuleFor(command => command.Load)
                 .GreaterThanOrEqualTo(0).WithMessage("Load cannot be negative.");

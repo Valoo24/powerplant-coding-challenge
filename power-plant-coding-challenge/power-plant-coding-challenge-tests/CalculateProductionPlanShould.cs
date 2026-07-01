@@ -8,7 +8,7 @@ namespace power_plant_coding_challenge_tests;
 
 public class CalculateProductionPlanShould
 {
-    private readonly CalculateProductionPlan.Handler _sut =
+    private readonly CalculateProductionPlanHandler _sut =
     new(Options.Create(new ProductionPlanOptions { IncludeCo2Costs = false }));
 
     // Powerplants coming from payload1/2/3.json
@@ -29,7 +29,7 @@ public class CalculateProductionPlanShould
     public async Task ReturnCorrectPlan_ForPayload1()
     {
         //Arrange
-        var command = new CalculateProductionPlan.Command(
+        var command = new CalculateProductionPlanCommand(
             Load: 480,
             Fuels: new Fuel { Gas = 13.4m, Kerosine = 50.8m, Co2 = 20m, Wind = 60m },
             Powerplants: DefaultPowerplants
@@ -56,7 +56,7 @@ public class CalculateProductionPlanShould
     public async Task ReturnCorrectPlan_ForPayload2()
     {
         //Arrange
-        var command = new CalculateProductionPlan.Command(
+        var command = new CalculateProductionPlanCommand(
             Load: 480,
             Fuels: new Fuel { Gas = 13.4m, Kerosine = 50.8m, Co2 = 20m, Wind = 0m },
             Powerplants: DefaultPowerplants
@@ -83,7 +83,7 @@ public class CalculateProductionPlanShould
     public async Task ReturnCorrectPlan_ForPayload3()
     {
         //Arrange
-        var command = new CalculateProductionPlan.Command(
+        var command = new CalculateProductionPlanCommand(
             Load: 910,
             Fuels: new Fuel { Gas = 13.4m, Kerosine = 50.8m, Co2 = 20m, Wind = 60m },
             Powerplants: DefaultPowerplants
@@ -113,7 +113,7 @@ public class CalculateProductionPlanShould
     public async Task ReturnAResultWithSumEqualsToLoad(int load, decimal windPercent)
     {
         //Arrange
-        var command = new CalculateProductionPlan.Command(
+        var command = new CalculateProductionPlanCommand(
             Load: load,
             Fuels: new Fuel { Gas = 13.4m, Kerosine = 50.8m, Co2 = 20m, Wind = windPercent },
             Powerplants: DefaultPowerplants
@@ -133,7 +133,7 @@ public class CalculateProductionPlanShould
     public async Task ReturnAResultWithOnlyZeroPWhenLoadIsZero()
     {
         //Arrange
-        var command = new CalculateProductionPlan.Command(
+        var command = new CalculateProductionPlanCommand(
             Load: 0,
             Fuels: new Fuel { Gas = 13.4m, Kerosine = 50.8m, Co2 = 20m, Wind = 60m },
             Powerplants: DefaultPowerplants
@@ -153,7 +153,7 @@ public class CalculateProductionPlanShould
     public async Task ReturnAResultWithWindTurbineAtZeroWhenWindIsZero()
     {
         //Arrange
-        var command = new CalculateProductionPlan.Command(
+        var command = new CalculateProductionPlanCommand(
             Load: 480,
             Fuels: new Fuel { Gas = 13.4m, Kerosine = 50.8m, Co2 = 20m, Wind = 0m },
             Powerplants: DefaultPowerplants
@@ -175,7 +175,7 @@ public class CalculateProductionPlanShould
     public async Task NotReturnAPowerplantWithPExceedingItsPMax()
     {
         //Arrange
-        var command = new CalculateProductionPlan.Command(
+        var command = new CalculateProductionPlanCommand(
             Load: 910,
             Fuels: new Fuel { Gas = 13.4m, Kerosine = 50.8m, Co2 = 20m, Wind = 60m },
             Powerplants: DefaultPowerplants
@@ -204,7 +204,7 @@ public class CalculateProductionPlanShould
     public async Task NotReturnAnyPowerplantWithPUnderItsPMinIfPowerplantIsActive()
     {
         //Arrange
-        var command = new CalculateProductionPlan.Command(
+        var command = new CalculateProductionPlanCommand(
             Load: 910,
             Fuels: new Fuel { Gas = 13.4m, Kerosine = 50.8m, Co2 = 20m, Wind = 60m },
             Powerplants: DefaultPowerplants
@@ -231,7 +231,7 @@ public class CalculateProductionPlanShould
     public async Task ThrowExceptionWhenLoadExceedsTotalCapacity()
     {
         //Arrange
-        var command = new CalculateProductionPlan.Command(
+        var command = new CalculateProductionPlanCommand(
             Load: 800,
             Fuels: new Fuel { Gas = 15m, Kerosine = 50m, Co2 = 20m, Wind = 0m },
             Powerplants: [
@@ -251,7 +251,7 @@ public class CalculateProductionPlanShould
     public async Task ReturnOnlyWindPowerplantResultIfWindPowerplantMatchTheExactLoad()
     {
         //Arrange
-        var command = new CalculateProductionPlan.Command(
+        var command = new CalculateProductionPlanCommand(
             Load: 40,
             Fuels: new Fuel { Gas = 15m, Kerosine = 50m, Co2 = 20m, Wind = 100m },
             Powerplants: [
@@ -277,7 +277,7 @@ public class CalculateProductionPlanShould
     public async Task ReturnAResultWithAMixOfWindAndGas()
     {
         //Arrange
-        var command = new CalculateProductionPlan.Command(
+        var command = new CalculateProductionPlanCommand(
             Load: 50,
             Fuels: new Fuel { Gas = 15m, Kerosine = 50m, Co2 = 20m, Wind = 75m },
             Powerplants: [
@@ -303,7 +303,7 @@ public class CalculateProductionPlanShould
     public async Task NotReturnAnyWindInResultIfWindPowerplantsExceedsLoad()
     {
         //Arrange
-        var command = new CalculateProductionPlan.Command(
+        var command = new CalculateProductionPlanCommand(
             Load: 30,
             Fuels: new Fuel { Gas = 15m, Kerosine = 50m, Co2 = 20m, Wind = 80m },
             Powerplants: [
@@ -329,7 +329,7 @@ public class CalculateProductionPlanShould
     public async Task NotReturnAnyWindPowerplantIfItsPMaxAndPMinOfNextPowerplantExceedsLoad()
     {
         //Arrange
-        var command = new CalculateProductionPlan.Command(
+        var command = new CalculateProductionPlanCommand(
             Load: 60,
             Fuels: new Fuel { Gas = 20m, Kerosine = 50m, Co2 = 0m, Wind = 100m },
             Powerplants: [
@@ -357,7 +357,7 @@ public class CalculateProductionPlanShould
     public async Task ReturnTheCheapestResultWithhoutWindIfPossible()
     {
         //Arrange
-        var command = new CalculateProductionPlan.Command(
+        var command = new CalculateProductionPlanCommand(
             Load: 80,
             Fuels: new Fuel { Gas = 20m, Kerosine = 50m, Co2 = 0m, Wind = 100m },
             Powerplants: [
@@ -385,7 +385,7 @@ public class CalculateProductionPlanShould
     public async Task OrderThePowerplantBasedOnTheirActualEfficiency()
     {
         //Arrange
-        var command = new CalculateProductionPlan.Command(
+        var command = new CalculateProductionPlanCommand(
             Load: 50,
             Fuels: new Fuel { Gas = 15m, Kerosine = 50m, Co2 = 20m, Wind = 0m },
             Powerplants: [
@@ -413,7 +413,7 @@ public class CalculateProductionPlanShould
     public async Task ReturnAllPowerplantIfNeededWithTheResultOrderedInMeritOrder()
     {
         //Arrange
-        var command = new CalculateProductionPlan.Command(
+        var command = new CalculateProductionPlanCommand(
             Load: 490,
             Fuels: new Fuel { Gas = 15m, Kerosine = 50m, Co2 = 20m, Wind = 0m },
             Powerplants: [
@@ -445,7 +445,7 @@ public class CalculateProductionPlanShould
     public async Task NotReturnAPowerplantWithPminExceedingRemainingLoadInTheProcess()
     {
         //Arrange
-        var command = new CalculateProductionPlan.Command(
+        var command = new CalculateProductionPlanCommand(
             Load: 120,
             Fuels: new Fuel { Gas = 15m, Kerosine = 50m, Co2 = 20m, Wind = 100m },
             Powerplants: [
@@ -473,7 +473,7 @@ public class CalculateProductionPlanShould
     public async Task ReturnResultWithTurbojetOverGasWhenGasPminExceedsRemainingLoad()
     {
         //Arrange
-        var command = new CalculateProductionPlan.Command(
+        var command = new CalculateProductionPlanCommand(
             Load: 100,
             Fuels: new Fuel { Gas = 15m, Kerosine = 50m, Co2 = 20m, Wind = 50m },
             Powerplants: [
@@ -501,10 +501,10 @@ public class CalculateProductionPlanShould
     public async Task ReturnTurboJetHigherInMeritOrderTakingToAccountTheCo2Cost()
     {
         //Arrange
-        var sutWithCo2 = new CalculateProductionPlan.Handler(
+        var sutWithCo2 = new CalculateProductionPlanHandler(
             Options.Create(new ProductionPlanOptions { IncludeCo2Costs = true }));
 
-        var command = new CalculateProductionPlan.Command(
+        var command = new CalculateProductionPlanCommand(
             Load: 50,
             Fuels: new Fuel { Gas = 10m, Kerosine = 20m, Co2 = 100m, Wind = 0m },
             Powerplants: [
@@ -530,10 +530,10 @@ public class CalculateProductionPlanShould
     public async Task ReturnDifferentResultRegardingTheUseOfCo2Cost()
     {
         //Arrange
-        var sutNoCo2   = new CalculateProductionPlan.Handler(Options.Create(new ProductionPlanOptions { IncludeCo2Costs = false }));
-        var sutWithCo2 = new CalculateProductionPlan.Handler(Options.Create(new ProductionPlanOptions { IncludeCo2Costs = true }));
+        var sutNoCo2   = new CalculateProductionPlanHandler(Options.Create(new ProductionPlanOptions { IncludeCo2Costs = false }));
+        var sutWithCo2 = new CalculateProductionPlanHandler(Options.Create(new ProductionPlanOptions { IncludeCo2Costs = true }));
 
-        var command = new CalculateProductionPlan.Command(
+        var command = new CalculateProductionPlanCommand(
             Load: 100,
             Fuels: new Fuel { Gas = 10m, Kerosine = 15m, Co2 = 30m, Wind = 0m },
             Powerplants: [
